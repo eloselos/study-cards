@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyCards - Modern Flashcard App</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #a5b4fc;
+      --bg-primary: #fefefe;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f8fafc;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      min-height: 100vh;
+      background: var(--bg-primary);
+      margin: 0 auto;
+      max-width: 1400px;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-light);
+      padding: 24px 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.025em;
+    }
+
+    .main-content {
+      padding: 32px;
+      min-height: calc(100vh - 100px);
+    }
+
+    .welcome-section {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .welcome-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      letter-spacing: -0.025em;
+    }
+
+    .welcome-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-md);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--primary);
+    }
+
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .btn-icon {
+      padding: 12px;
+      min-width: 44px;
+      justify-content: center;
+    }
+
+    .decks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .deck-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .deck-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    }
+
+    .deck-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-light);
+    }
+
+    .deck-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .deck-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .deck-stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-badge {
+      background: var(--bg-tertiary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .deck-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .study-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .study-header {
+      margin-bottom: 32px;
+    }
+
+    .study-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .study-progress {
+      background: var(--bg-tertiary);
+      border-radius: 50px;
+      height: 8px;
+      margin: 24px 0;
+      overflow: hidden;
+    }
+
+    .study-progress-bar {
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      height: 100%;
+      transition: width 0.3s ease;
+      border-radius: 50px;
+    }
+
+    .flashcard-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px;
+      margin: 32px 0;
+    }
+
+    .flashcard {
+      width: 100%;
+      max-width: 500px;
+      height: 300px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+
+    .flashcard-inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s ease;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .flashcard.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 32px;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .flashcard-back {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: var(--text-secondary);
+    }
+
+    .study-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .difficulty-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .btn-easy {
+      background: var(--success);
+    }
+
+    .btn-easy:hover {
+      background: #059669;
+    }
+
+    .btn-hard {
+      background: var(--error);
+    }
+
+    .btn-hard:hover {
+      background: #dc2626;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-xl);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-family: inherit;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      resize: vertical;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+    }
+
+    .cards-list {
+      margin: 24px 0;
+    }
+
+    .card-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .card-content {
+      flex: 1;
+    }
+
+    .card-front {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .card-back {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .flip-hint {
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      margin-top: 16px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Delete confirmation modal styles */
+    .delete-modal {
+      max-width: 400px;
+    }
+
+    .delete-content {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .delete-icon {
+      font-size: 3rem;
+      color: var(--error);
+      margin-bottom: 16px;
+    }
+
+    .delete-message {
+      font-size: 1.125rem;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .delete-submessage {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .delete-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 16px 20px;
+      }
+
+      .main-content {
+        padding: 20px;
+      }
+
+      .welcome-title {
+        font-size: 2.5rem;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .cta-buttons .btn {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .decks-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .study-controls {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .study-controls .btn {
+        width: 100%;
+        max-width: 200px;
+      }
+
+      .modal {
+        margin: 20px;
+        padding: 24px;
+      }
+
+      .flashcard {
+        max-width: 100%;
+        height: 250px;
+      }
+
+      .difficulty-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .difficulty-buttons .btn {
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="logo">StudyCards</div>
+    </header>
+
+    <main class="main-content">
+      <div id="app-content">
+        <div class="welcome-section">
+          <h1 class="welcome-title">Master Any Subject</h1>
+          <p class="welcome-subtitle">Create beautiful flashcards and study smarter with our intelligent learning system</p>
+          <div class="cta-buttons">
+            <button class="btn" onclick="showCreateDeckModal()">
+              ✨ Create Your First Deck
+            </button>
+          </div>
+        </div>
+
+        <div id="decks-container">
+          <div class="decks-grid" id="decks-grid"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Deck Modal -->
+  <div id="deckModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="deckModalTitle">Create New Deck</h3>
+        <button class="close-btn" onclick="closeDeckModal()">&times;</button>
+      </div>
+      <form id="deckForm">
+        <div class="form-group">
+          <label class="form-label" for="deckName">Deck Name</label>
+          <input type="text" id="deckName" class="form-input" placeholder="Enter deck name..." required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Cards</label>
+          <div id="cardsList" class="cards-list"></div>
+          <button type="button" class="btn btn-secondary" onclick="addCardToDeck()">
+            + Add Card
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px;">
+          <button type="button" class="btn btn-secondary" onclick="closeDeckModal()">Cancel</button>
+          <button type="submit" class="btn">Save Deck</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add/Edit Card Modal -->
+  <div id="cardModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cardModalTitle">Add New Card</h3>
+        <button class="close-btn" onclick="closeCardModal()">&times;</button>
+      </div>
+      <form id="cardForm">
+        <div class="form-group">
+          <label class="form-label" for="cardFront">Front (Question/Term)</label>
+          <textarea id="cardFront" class="form-textarea" placeholder="Enter the question or term..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cardBack">Back (Answer/Definition)</label>
+          <textarea id="cardBack" class="form-textarea" placeholder="Enter the answer or definition..." required></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeCardModal()">Cancel</button>
+          <button type="submit" class="btn">Save Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal delete-modal">
+      <div class="delete-content">
+        <div class="delete-icon">🗑️</div>
+        <div class="delete-message" id="deleteMessage">Delete this deck?</div>
+        <div class="delete-submessage">This action cannot be undone.</div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-hard" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let decks = JSON.parse(localStorage.getItem("studycards_decks")) || [];
+    let currentStudyDeck = null;
+    let currentCardIndex = 0;
+    let currentEditingDeck = null;
+    let currentEditingCard = null;
+    let tempCards = []; // For deck creation
+    let deleteTarget = null; // For deletion confirmation
+    let shuffledCards = []; // For randomized study order
+
+    function save() {
+      localStorage.setItem("studycards_decks", JSON.stringify(decks));
+      renderDecks();
+    }
+
+    function showCreateDeckModal() {
+      document.getElementById('deckModalTitle').textContent = 'Create New Deck';
+      document.getElementById('deckName').value = '';
+      currentEditingDeck = null;
+      tempCards = [];
+      renderTempCards();
+      document.getElementById('deckModal').classList.add('active');
+      document.getElementById('deckName').focus();
+    }
+
+    function closeDeckModal() {
+      document.getElementById('deckModal').classList.remove('active');
+      tempCards = [];
+      currentEditingDeck = null;
+    }
+
+    function showCardModal(isEdit = false, cardIndex = null) {
+      if (isEdit && cardIndex !== null) {
+        const card = tempCards[cardIndex];
+        document.getElementById('cardModalTitle').textContent = 'Edit Card';
+        document.getElementById('cardFront').value = card.front;
+        document.getElementById('cardBack').value = card.back;
+        currentEditingCard = cardIndex;
+      } else {
+        document.getElementById('cardModalTitle').textContent = 'Add New Card';
+        document.getElementById('cardFront').value = '';
+        document.getElementById('cardBack').value = '';
+        currentEditingCard = null;
+      }
+      document.getElementById('cardModal').classList.add('active');
+      document.getElementById('cardFront').focus();
+    }
+
+    function closeCardModal() {
+      document.getElementById('cardModal').classList.remove('active');
+    }
+
+    function addCardToDeck() {
+      showCardModal();
+    }
+
+    function renderTempCards() {
+      const cardsList = document.getElementById('cardsList');
+      if (tempCards.length === 0) {
+        cardsList.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 20px;">No cards added yet</p>';
+        return;
+      }
+
+      cardsList.innerHTML = tempCards.map((card, index) => `
+        <div class="card-item">
+          <div class="card-content">
+            <div class="card-front">${card.front}</div>
+            <div class="card-back">→ ${card.back}</div>
+          </div>
+          <div class="card-actions">
+            <button type="button" class="btn btn-small" onclick="showCardModal(true, ${index})">Edit</button>
+            <button type="button" class="btn btn-small btn-hard" onclick="removeTempCard(${index})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function removeTempCard(index) {
+      tempCards.splice(index, 1);
+      renderTempCards();
+    }
+
+    // Delete confirmation modal functions
+    function showDeleteModal(type, index, name) {
+      deleteTarget = { type, index, name };
+      document.getElementById('deleteMessage').textContent = `Delete "${name}"?`;
+      document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('active');
+      deleteTarget = null;
+    }
+
+    function confirmDelete() {
+      if (deleteTarget) {
+        if (deleteTarget.type === 'deck') {
+          decks.splice(deleteTarget.index, 1);
+          save();
+        }
+        closeDeleteModal();
+      }
+    }
+
+    // Shuffle arr funct
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    // Form handler
+    document.getElementById('deckForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('deckName').value.trim();
+      
+      if (!name) {
+        alert('Please enter a deck name!');
+        return;
+      }
+      
+      if (tempCards.length === 0) {
+        alert('Please add at least one card to your deck!');
+        return;
+      }
+
+      if (currentEditingDeck !== null) {
+        // Editing deck
+        decks[currentEditingDeck].name = name;
+        decks[currentEditingDeck].cards = [...tempCards];
+        decks[currentEditingDeck].updatedAt = new Date().toISOString();
+      } else {
+        //  new deck
+        const newDeck = {
+          id: Date.now(),
+          name: name,
+          cards: [...tempCards],
+          createdAt: new Date().toISOString(),
+          studyCount: 0
+        };
+        decks.push(newDeck);
+      }
+      
+      save();
+      closeDeckModal();
+    });
+
+    document.getElementById('cardForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const front = document.getElementById('cardFront').value.trim();
+      const back = document.getElementById('cardBack').value.trim();
+      
+      if (front && back) {
+        const card = {
+          id: Date.now(),
+          front: front,
+          back: back,
+          createdAt: new Date().toISOString()
+        };
+
+        if (currentEditingCard !== null) {
+          tempCards[currentEditingCard] = card;
+        } else {
+          tempCards.push(card);
+        }
+        
+        renderTempCards();
+        closeCardModal();
+      }
+    });
+
+    function renderDecks() {
+      const container = document.getElementById('decks-container');
+      
+      if (decks.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <h2 class="empty-title">No decks yet</h2>
+            <p>Create your first flashcard deck to start learning!</p>
+          </div>
+        `;
+        return;
+      }
+
+      // grid structural check
+      if (!document.getElementById('decks-grid')) {
+        container.innerHTML = `<div class="decks-grid" id="decks-grid"></div>`;
+      }
+      
+      const grid = document.getElementById('decks-grid');
+      grid.innerHTML = decks.map((deck, index) => {
+        return `
+          <div class="deck-card" onclick="studyDeck(${index})">
+            <div class="deck-header">
+              <div>
+                <div class="deck-title">${deck.name}</div>
+                <div class="deck-stats">
+                  <span class="stat-badge">${deck.cards.length} cards</span>
+                  <span class="stat-badge">${deck.studyCount || 0} sessions</span>
+                </div>
+              </div>
+            </div>
+            <div class="deck-actions" onclick="event.stopPropagation()">
+              <button class="btn btn-small" onclick="editDeck(${index})">Edit</button>
+              <button class="btn btn-small" onclick="showDeleteModal('deck', ${index}, '${deck.name.replace(/'/g, "\\'")}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function editDeck(index) {
+      const deck = decks[index];
+      document.getElementById('deckModalTitle').textContent = 'Edit Deck';
+      document.getElementById('deckName').value = deck.name;
+      currentEditingDeck = index;
+      tempCards = [...deck.cards];
+      renderTempCards();
+      document.getElementById('deckModal').classList.add('active');
+      document.getElementById('deckName').focus();
+    }
+
+    function studyDeck(deckIndex) {
+      if (decks[deckIndex].cards.length === 0) {
+        alert("This deck has no cards to study!");
+        return;
+      }
+
+      currentStudyDeck = deckIndex;
+      currentCardIndex = 0;
+      
+      // Shuffle cards 
+      shuffledCards = shuffleArray(decks[deckIndex].cards);
+      
+      decks[deckIndex].studyCount = (decks[deckIndex].studyCount || 0) + 1;
+      save();
+      renderStudyMode();
+    }
+
+    function renderStudyMode() {
+      const deck = decks[currentStudyDeck];
+      const card = shuffledCards[currentCardIndex];
+      const progress = ((currentCardIndex + 1) / shuffledCards.length) * 100;
+
+      document.getElementById('app-content').innerHTML = `
+        <div class="study-container">
+          <div class="study-header">
+            <h2 class="study-title">${deck.name}</h2>
+            <div class="deck-stats">
+              <span class="stat-badge">Card ${currentCardIndex + 1} of ${shuffledCards.length}</span>
+              <span class="stat-badge">${Math.round(progress)}% Complete</span>
+            </div>
+            <div class="study-progress">
+              <div class="study-progress-bar" style="width: ${progress}%"></div>
+            </div>
+          </div>
+          
+          <div class="flashcard-container">
+            <div class="flashcard" onclick="flipCard()">
+              <div class="flashcard-inner" id="flashcard-inner">
+                <div class="flashcard-face">
+                  <div>${card.front}</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                  <div>${card.back}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <p class="flip-hint">Click the card to reveal the answer</p>
+          
+          <div class="difficulty-buttons" id="difficulty-buttons" style="display: none;">
+            <button class="btn btn-easy" onclick="markDifficulty('easy')">😊 Easy</button>
+            <button class="btn" onclick="markDifficulty('medium')">🤔 Medium</button>
+            <button class="btn btn-hard" onclick="markDifficulty('hard')">😰 Hard</button>
+          </div>
+          
+          <div class="study-controls">
+            <button class="btn btn-secondary" onclick="backToDecks()">← Back</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function flipCard() {
+      const card = document.querySelector('.flashcard');
+      card.classList.toggle('flipped');
+      
+      // Show difficulty 
+      const difficultyButtons = document.getElementById('difficulty-buttons');
+      if (card.classList.contains('flipped')) {
+        difficultyButtons.style.display = 'flex';
+      }
+    }
+
+    function markDifficulty(difficulty) {
+      // Advance to next card
+      if (currentCardIndex < shuffledCards.length - 1) {
+        currentCardIndex++;
+        renderStudyMode();
+      } else {
+        // Study session complete
+        alert('🎉 Great job! You\'ve completed this deck!');
+        backToDecks();
+      }
+    }
+
+    function backToDecks() {
+      currentStudyDeck = null;
+      shuffledCards = [];
+      document.getElementById('app-content').innerHTML = `
+        <div class="welcome-section">
+          <h1 class="welcome-title">Master Any Subject</h1>
+          <p class="welcome-subtitle">Create beautiful flashcards and study smarter with our intelligent learning system</p>
+          <div class="cta-buttons">
+            <button class="btn" onclick="showCreateDeckModal()">
+              ✨ Create New Deck
+            </button>
+          </div>
+        </div>
+        <div id="decks-container">
+          <div class="decks-grid" id="decks-grid"></div>
+        </div>
+      `;
+      renderDecks();
+    }
+
+    // Close modals wfor overlay
+    document.getElementById('deckModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeckModal();
+    });
+
+    document.getElementById('cardModal').addEventListener('click', function(e) {
+      if (e.target === this) closeCardModal();
+    });
+
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDeckModal();
+        closeCardModal();
+        closeDeleteModal();
+      }
+      
+      if (currentStudyDeck !== null && !document.querySelector('.modal-overlay.active')) {
+        switch(e.key) {
+          case ' ':
+          case 'Enter':
+            e.preventDefault();
+            flipCard();
+            break;
+          case '1':
+            e.preventDefault();
+            if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+              markDifficulty('easy');
+            }
+            break;
+          case '2':
+            e.preventDefault();
+            if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+              markDifficulty('medium');
+            }
+            break;
+          case '3':
+            e.preventDefault();
+            if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+              markDifficulty('hard');
+            }
+            break;
+        }
+      }
+    });
+
+    // Initialize app
+    renderDecks();
+  </script>
+</body>
+</html>

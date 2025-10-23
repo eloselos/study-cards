@@ -389,11 +389,10 @@ function backToDecks() {
   // Re-inject initial HTML content
   document.getElementById('app-content').innerHTML = `
     <div class="welcome-section">
-      <h1 class="welcome-title">Master Any Subject</h1>
-      <p class="welcome-subtitle">Create beautiful flashcards and study smarter with our intelligent learning system</p>
+      <h1 class="welcome-title">Welcome to StudyCards</h1>
       <div class="cta-buttons">
         <button class="btn" onclick="showCreateDeckModal()">
-          ✨ Create New Deck
+          Create New Deck
         </button>
       </div>
     </div>

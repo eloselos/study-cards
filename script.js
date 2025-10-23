@@ -1,450 +1,458 @@
-// Import Leaflet library
-const L = window.L
+let decks = JSON.parse(localStorage.getItem("studycards_decks")) || [];
+let currentStudyDeck = null;
+let currentCardIndex = 0;
+let currentEditingDeck = null;
+let currentEditingCard = null;
+let tempCards = []; // For deck creation
+let deleteTarget = null; // For deletion confirmation
+let shuffledCards = []; // For randomized study order
 
-function typeWriter(element, text, speed = 100) {
-  let i = 0
-  element.innerHTML = ""
-
-  function type() {
-    if (i < text.length) {
-      element.innerHTML += text.charAt(i)
-      i++
-      setTimeout(type, speed)
-    }
-  }
-  type()
+/**
+ * Saves the current state of decks to localStorage and re-renders the deck list.
+ */
+function save() {
+  localStorage.setItem("studycards_decks", JSON.stringify(decks));
+  renderDecks();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const titleElement = document.querySelector(".typewriter")
-  const text = titleElement.getAttribute("data-text")
-  typeWriter(titleElement, text, 150)
-
-  loadDailyMessage()
-  generateConstellation()
-  startCountdown()
-
-  if (localStorage.getItem("notebookUnlocked") === "true") {
-    unlockNotebook()
-  }
-
-  renderPlaylist()
-
-  if (typeof L !== "undefined") {
-    initializeMap()
-  }
-
-  document.getElementById("notebookPassword").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      unlockNotebook()
-    }
-  })
-})
-
-async function loadDailyMessage() {
-  try {
-    const response = await fetch("messages.json")
-    const data = await response.json()
-
-    const today = new Date()
-    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
-    const messageIndex = dayOfYear % data.messages.length
-
-    const messageElement = document.querySelector(".typewriter-message")
-    const dateElement = document.getElementById("messageDate")
-
-    typeWriter(messageElement, data.messages[messageIndex], 50)
-    dateElement.textContent = today.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  } catch (error) {
-    console.error("error loading daily message:", error)
-    document.querySelector(".typewriter-message").textContent = "you make every day brighter! ✨"
-  }
+/**
+ * Shows the Create/Edit Deck modal, initializing form for creation.
+ */
+function showCreateDeckModal() {
+  document.getElementById('deckModalTitle').textContent = 'Create New Deck';
+  document.getElementById('deckName').value = '';
+  currentEditingDeck = null;
+  tempCards = [];
+  renderTempCards();
+  document.getElementById('deckModal').classList.add('active');
+  document.getElementById('deckName').focus();
 }
 
-function checkSecretCode() {
-  const code = document.getElementById("secretCode").value.toLowerCase()
-  const secretMessage = document.getElementById("secretMessage")
+/**
+ * Closes the Create/Edit Deck modal and resets temporary data.
+ */
+function closeDeckModal() {
+  document.getElementById('deckModal').classList.remove('active');
+  tempCards = [];
+  currentEditingDeck = null;
+}
 
-  if (code === "nemo" || code === "handsome boy") {
-    secretMessage.textContent = "PICKLE (jumpscare)"
-    createSparkles(document.querySelector(".secret-card"))
+/**
+ * Shows the Add/Edit Card modal.
+ * @param {boolean} isEdit - True if editing an existing card, false for new card.
+ * @param {number|null} cardIndex - Index of the card in tempCards if editing.
+ */
+function showCardModal(isEdit = false, cardIndex = null) {
+  if (isEdit && cardIndex !== null) {
+    const card = tempCards[cardIndex];
+    document.getElementById('cardModalTitle').textContent = 'Edit Card';
+    document.getElementById('cardFront').value = card.front;
+    document.getElementById('cardBack').value = card.back;
+    currentEditingCard = cardIndex;
   } else {
-    secretMessage.textContent = "wrong code! try again 💕"
+    document.getElementById('cardModalTitle').textContent = 'Add New Card';
+    document.getElementById('cardFront').value = '';
+    document.getElementById('cardBack').value = '';
+    currentEditingCard = null;
   }
+  document.getElementById('cardModal').classList.add('active');
+  document.getElementById('cardFront').focus();
 }
 
-function createSparkles(element) {
-  for (let i = 0; i < 10; i++) {
-    const sparkle = document.createElement("div")
-    sparkle.innerHTML = "✨"
-    sparkle.style.position = "absolute"
-    sparkle.style.left = Math.random() * 100 + "%"
-    sparkle.style.top = Math.random() * 100 + "%"
-    sparkle.style.animation = "sparkle 1s ease-out forwards"
-    sparkle.style.pointerEvents = "none"
-    element.style.position = "relative"
-    element.appendChild(sparkle)
+/**
+ * Closes the Add/Edit Card modal.
+ */
+function closeCardModal() {
+  document.getElementById('cardModal').classList.remove('active');
+}
 
-    setTimeout(() => sparkle.remove(), 1000)
+/**
+ * Handler for the 'Add Card' button inside the Deck Modal.
+ */
+function addCardToDeck() {
+  showCardModal();
+}
+
+/**
+ * Renders the list of cards currently being created or edited in the Deck Modal.
+ */
+function renderTempCards() {
+  const cardsList = document.getElementById('cardsList');
+  if (tempCards.length === 0) {
+    cardsList.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 20px;">No cards added yet</p>';
+    return;
   }
+
+  cardsList.innerHTML = tempCards.map((card, index) => `
+    <div class="card-item">
+      <div class="card-content">
+        <div class="card-front">${card.front}</div>
+        <div class="card-back">→ ${card.back}</div>
+      </div>
+      <div class="card-actions">
+        <button type="button" class="btn btn-small" onclick="showCardModal(true, ${index})">Edit</button>
+        <button type="button" class="btn btn-small btn-hard" onclick="removeTempCard(${index})">Delete</button>
+      </div>
+    </div>
+  `).join('');
 }
 
-const sparkleCSS = `
-@keyframes sparkle {
-    0% { opacity: 0; transform: scale(0) rotate(0deg); }
-    50% { opacity: 1; transform: scale(1) rotate(180deg); }
-    100% { opacity: 0; transform: scale(0) rotate(360deg); }
-}
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-`
-
-const style = document.createElement("style")
-style.textContent = sparkleCSS
-document.head.appendChild(style)
-
-async function generateConstellation() {
-  try {
-    const response = await fetch("memories.json")
-    const data = await response.json()
-    const container = document.getElementById("constellationContainer")
-
-    data.memories.forEach((memory) => {
-      const star = document.createElement("div")
-      star.className = "star"
-
-      star.style.left = memory.x || Math.random() * 95 + "%"
-      star.style.top = memory.y || Math.random() * 95 + "%"
-      star.style.animationDelay = Math.random() * 2 + "s"
-
-      star.addEventListener("click", () => {
-        showMemory(memory.text)
-      })
-
-      container.appendChild(star)
-    })
-  } catch (error) {
-    console.error("error loading memories:", error)
-  }
+/**
+ * Removes a card from the temporary card list.
+ * @param {number} index - Index of the card to remove.
+ */
+function removeTempCard(index) {
+  tempCards.splice(index, 1);
+  renderTempCards();
 }
 
-function showMemory(memory) {
-  const display = document.getElementById("memoryDisplay")
-  display.innerHTML = `<div style="animation: fadeIn 0.5s ease-in;">${memory}</div>`
+/**
+ * Shows the Delete Confirmation modal.
+ * @param {string} type - Type of item to delete ('deck').
+ * @param {number} index - Index of the item in the respective array.
+ * @param {string} name - Name of the item to display in the message.
+ */
+function showDeleteModal(type, index, name) {
+  deleteTarget = { type, index, name };
+  document.getElementById('deleteMessage').textContent = `Delete "${name}"?`;
+  document.getElementById('deleteModal').classList.add('active');
 }
 
-function startCountdown() {
-  const targetDate = new Date("2025-10-24T10:00:00").getTime()
+/**
+ * Closes the Delete Confirmation modal.
+ */
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('active');
+  deleteTarget = null;
+}
 
-  function updateCountdown() {
-    const now = new Date().getTime()
-    const distance = targetDate - now
-
-    if (distance < 0) {
-      document.getElementById("countdownDisplay").innerHTML =
-        '<div style="text-align: center; font-size: 1.5rem; color: #ffd700;">RAAAHHHH WE ARE SO BACK</div>'
-      return
+/**
+ * Executes the deletion based on the deleteTarget.
+ */
+function confirmDelete() {
+  if (deleteTarget) {
+    if (deleteTarget.type === 'deck') {
+      decks.splice(deleteTarget.index, 1);
+      save();
     }
-
-    const days = Math.floor(distance / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((distance % (1000 * 60)) / 1000)
-
-    document.getElementById("days").textContent = days.toString().padStart(2, "0")
-    document.getElementById("hours").textContent = hours.toString().padStart(2, "0")
-    document.getElementById("minutes").textContent = minutes.toString().padStart(2, "0")
-    document.getElementById("seconds").textContent = seconds.toString().padStart(2, "0")
+    closeDeleteModal();
   }
-
-  updateCountdown()
-  setInterval(updateCountdown, 1000)
 }
 
-// notebook functionality
-function unlockNotebook() {
-  const password = document.getElementById("notebookPassword").value
-  const correctPassword = "SPONGEBOB"
+/**
+ * Shuffles an array using the Fisher-Yates algorithm.
+ * @param {Array} array - The array to shuffle.
+ * @returns {Array} The shuffled array.
+ */
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
-  if (password === correctPassword || localStorage.getItem("notebookUnlocked") === "true") {
-    document.getElementById("notebookLock").style.display = "none"
-    document.getElementById("notebook").style.display = "block"
-    localStorage.setItem("notebookUnlocked", "true")
+// Deck Form handler
+document.getElementById('deckForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const name = document.getElementById('deckName').value.trim();
+  
+  if (!name) {
+    alert('Please enter a deck name!');
+    return;
+  }
+  
+  if (tempCards.length === 0) {
+    alert('Please add at least one card to your deck!');
+    return;
+  }
+
+  if (currentEditingDeck !== null) {
+    // Editing deck
+    decks[currentEditingDeck].name = name;
+    decks[currentEditingDeck].cards = [...tempCards];
+    decks[currentEditingDeck].updatedAt = new Date().toISOString();
   } else {
-    alert("incorrect password! try again")
+    // new deck
+    const newDeck = {
+      id: Date.now(),
+      name: name,
+      cards: [...tempCards],
+      createdAt: new Date().toISOString(),
+      studyCount: 0
+    };
+    decks.push(newDeck);
   }
-}
+  
+  save();
+  closeDeckModal();
+});
 
-function lockNotebook() {
-  document.getElementById("notebookLock").style.display = "block"
-  document.getElementById("notebook").style.display = "none"
-  localStorage.removeItem("notebookUnlocked")
-  document.getElementById("notebookPassword").value = ""
-}
+// Card Form handler
+document.getElementById('cardForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const front = document.getElementById('cardFront').value.trim();
+  const back = document.getElementById('cardBack').value.trim();
+  
+  if (front && back) {
+    const card = {
+      id: Date.now(),
+      front: front,
+      back: back,
+      createdAt: new Date().toISOString()
+    };
 
-const playlistSongs = [
-
-   { name: "100% gotta listen to it's very important to me",
-    link: "https://www.youtube.com/watch?v=O91DT1pR1ew",  },
-
-  {
-    name: "on an island (cz we are on an island and it is a love song duh)", 
-    link: "https://www.youtube.com/watch?v=zgtoe1CvlHE",
-     },
-  { name: "40 days (CAUSE I LOVE THE WAY THAT U SMILE N I LIKE THAT PART OF THE SONG)", 
-    link: "https://www.youtube.com/watch?v=QKOF7NaWv1A" 
-    },
-  { name: "kisses (CZ KISSES???)", 
-    link: "https://www.youtube.com/watch?v=97U7erexyR0" 
-    },
-  {
+    if (currentEditingCard !== null) {
+      tempCards[currentEditingCard] = card;
+    } else {
+      tempCards.push(card);
+    }
     
+    renderTempCards();
+    closeCardModal();
   }
-]
+});
 
+/**
+ * Renders the list of all decks on the main screen.
+ */
+function renderDecks() {
+  const container = document.getElementById('decks-container');
+  
+  if (decks.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h2 class="empty-title">No decks yet</h2>
+        <p>Create your first flashcard deck to start learning!</p>
+      </div>
+    `;
+    return;
+  }
 
-function renderPlaylist() {
-  const playlistList = document.getElementById("playlistList")
-  if (!playlistList) return
-
-  playlistList.innerHTML = ""
-
-  playlistSongs.forEach((song) => {
-    const songDiv = document.createElement("div")
-    songDiv.className = "playlist-item"
-
-    const songNameSpan = document.createElement("span")
-    songNameSpan.className = "playlist-item-name"
-    songNameSpan.textContent = song.name
-    songNameSpan.addEventListener("click", () => {
-      window.open(song.link, "_blank")
-    })
-    songDiv.appendChild(songNameSpan)
-
-    const playButton = document.createElement("button")
-    playButton.className = "playlist-play-btn"
-    playButton.innerHTML = "▶"
-    playButton.addEventListener("click", () => {
-      window.open(song.link, "_blank")
-    })
-    songDiv.appendChild(playButton)
-
-    playlistList.appendChild(songDiv)
-  })
+  // Ensure the grid container exists after initial empty state is gone
+  if (!document.getElementById('decks-grid')) {
+    container.innerHTML = `<div class="decks-grid" id="decks-grid"></div>`;
+  }
+  
+  const grid = document.getElementById('decks-grid');
+  grid.innerHTML = decks.map((deck, index) => {
+    // Escape single quotes in deck name for onclick function
+    const escapedName = deck.name.replace(/'/g, "\\'");
+    return `
+      <div class="deck-card" onclick="studyDeck(${index})">
+        <div class="deck-header">
+          <div>
+            <div class="deck-title">${deck.name}</div>
+            <div class="deck-stats">
+              <span class="stat-badge">${deck.cards.length} cards</span>
+              <span class="stat-badge">${deck.studyCount || 0} sessions</span>
+            </div>
+          </div>
+        </div>
+        <div class="deck-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-small" onclick="editDeck(${index})">Edit</button>
+          <button class="btn btn-small" onclick="showDeleteModal('deck', ${index}, '${escapedName}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
-function initializeMap() {
-  // Set initial view to a central point in Famagusta
-  const map = L.map("map").setView([35.1230, 33.9470], 15) 
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors",
-    maxZoom: 19,
-  }).addTo(map)
+/**
+ * Loads a deck for editing.
+ * @param {number} index - Index of the deck in the decks array.
+ */
+function editDeck(index) {
+  const deck = decks[index];
+  document.getElementById('deckModalTitle').textContent = 'Edit Deck';
+  document.getElementById('deckName').value = deck.name;
+  currentEditingDeck = index;
+  tempCards = [...deck.cards];
+  renderTempCards();
+  document.getElementById('deckModal').classList.add('active');
+  document.getElementById('deckName').focus();
+}
 
-  // 1. BASE ICON (Default Anchor: Center Bottom [22.5, 45])
-  const baseHeartIcon = L.divIcon({
-    className: "custom-heart-icon",
-    html: '<img src="https://cdn2.iconfinder.com/data/icons/valentine-colored-icons-1/128/44-512.png" style="width: 45px; height: 45px;" alt="heart">',
-    iconSize: [45, 45],
-    iconAnchor: [22.5, 45],
-  })
-
-  // 2. MONKS INN ICON (Shifted LEFT for separation)
-  const monksInnIcon = L.divIcon({
-    className: "custom-heart-icon",
-    html: baseHeartIcon.options.html,
-    iconSize: [45, 45],
-    iconAnchor: [37.5, 45], 
-  })
-
-  // 3. PETEK ICON (Shifted RIGHT for separation)
-  const petekIcon = L.divIcon({
-    className: "custom-heart-icon",
-    html: baseHeartIcon.options.html,
-    iconSize: [45, 45],
-    iconAnchor: [7.5, 45], 
-  })
-
-  // CORRECTED LOCATIONS AND COORDINATES
-  const locations = [
-    {
-      coords: [35.125339, 33.943722],
-      title: "Monks Inn",
-      message: "My fav cocktail bar in Famagusta! There isn't a chance that you won't like it.",
-    },
-    {
-      coords: [35.118132, 33.957826],
-      title: "Palm Beach",
-      message:
-        "This is one of the nicest beaches in central Famagusta. THERE ARE TURTLES HERE SOMETIMES!! It's also right next to the ghost town.",
-    },
-    {
-      coords: [35.121242, 33.956661],
-      title: "PalmHouse",
-      message: "I like the vibes of this place. Nice to eat homemade thingies n wine!",
-    },
-    {
-      coords: [35.120502, 33.956339], 
-      title: "LEAA",
-      message: "A cocktail bar with a stunning sunset view, perfect for evening drinks.",
-    },
-    {
-      coords: [35.1245, 33.9450], 
-      title: "Inciraltı",
-      message:
-        "This one is like a Turkish-tavern concept. Could be fun depending on the vibe. They make crazy good mezzes though.",
-    },
-    {
-      coords: [35.1249, 33.9425],
-      title: "Mardo",
-      message: "Right next to the big mosque of old town. 10/10 location. Has the best ice cream.",
-    },
-    {
-      coords: [35.1277, 33.9431],
-      title: "Lion Statue",
-      message:
-        "This is a lion statue next to the city walls. It is said that if u whisper your wishes to it they will come true.",
-    },
-    {
-      coords: [35.126139, 33.944169], 
-      title: "Petek",
-      message: "BEST PLACE TO EAT BAKLAVA ON THE WHOOOOLE ISLAND I'M 100% SURE.",
-    },
-  ]
-
-  const customPopup = document.getElementById("customPopup")
-  const popupTitle = customPopup.querySelector(".popup-title")
-  const popupMessage = customPopup.querySelector(".popup-message")
-
-  // --- Map Popup State Management ---
-  let activePopupTimeout = null 
-  let isPopupAttached = false 
-  let isMouseOver = false // New state variable to track hover status
-
-  function updatePopupPosition(latlng) {
-    const markerPosition = map.latLngToContainerPoint(latlng)
-    customPopup.style.left = markerPosition.x - 150 + "px"
-    customPopup.style.top = markerPosition.y - 160 + "px"
+/**
+ * Initializes the study mode for a selected deck.
+ * @param {number} deckIndex - Index of the deck in the decks array.
+ */
+function studyDeck(deckIndex) {
+  if (decks[deckIndex].cards.length === 0) {
+    alert("This deck has no cards to study!");
+    return;
   }
 
-  function attachMapEvents(latlng) {
-    if (isPopupAttached) {
-      detachMapEvents()
-    }
+  currentStudyDeck = deckIndex;
+  currentCardIndex = 0;
+  
+  // Shuffle cards 
+  shuffledCards = shuffleArray(decks[deckIndex].cards);
+  
+  decks[deckIndex].studyCount = (decks[deckIndex].studyCount || 0) + 1;
+  save(); // Save study count
+  renderStudyMode();
+}
 
-    map._currentPopupLatLng = latlng
+/**
+ * Renders the study screen with the current flashcard.
+ */
+function renderStudyMode() {
+  const deck = decks[currentStudyDeck];
+  const card = shuffledCards[currentCardIndex];
+  const progress = ((currentCardIndex + 1) / shuffledCards.length) * 100;
 
-    function handler() {
-      if (map._currentPopupLatLng) {
-        updatePopupPosition(map._currentPopupLatLng)
-      }
-    }
-
-    map.on("move", handler)
-    map.on("zoom", handler)
-    isPopupAttached = true
-  }
-
-  function detachMapEvents() {
-    if (isPopupAttached) {
-      map.off("move")
-      map.off("zoom")
-      delete map._currentPopupLatLng
-      isPopupAttached = false
-    }
-  }
-  // Accordion Logic
-const accordionHeaders = document.querySelectorAll(".accordion-header")
-
-accordionHeaders.forEach((header) => {
-  header.addEventListener("click", () => {
-    const accordionItem = header.parentElement
-    const isActive = accordionItem.classList.contains("active")
-
-    // Close all accordion items
-    document.querySelectorAll(".accordion-item").forEach((item) => {
-      item.classList.remove("active")
-    })
-
-    // Open clicked item if it wasn't active
-    if (!isActive) {
-      accordionItem.classList.add("active")
-    }
-  })
-})
-
-  function showPopup(location, latlng) {
-    popupTitle.textContent = location.title
-    popupMessage.textContent = location.message
-
-    updatePopupPosition(latlng)
-
-    customPopup.classList.remove("hidden")
-    customPopup.style.opacity = "1"
-
-    attachMapEvents(latlng)
-  }
-
-  function hidePopup() {
-    // We remove the condition check here and let the mouseout handler manage the state.
-    customPopup.style.opacity = "0"
-    setTimeout(() => {
-        customPopup.classList.add("hidden")
-        detachMapEvents()
-    }, 300) // 300ms fade transition
-  }
-  // --- End of State Management ---
-
-  locations.forEach((location) => {
-    // DETERMINE WHICH ICON TO USE BASED ON THE TITLE
-    let iconToUse = baseHeartIcon;
-    if (location.title === "Monks Inn") {
-        iconToUse = monksInnIcon;
-    } else if (location.title === "Petek") {
-        iconToUse = petekIcon;
-    }
-
-    const marker = L.marker(location.coords, { icon: iconToUse }).addTo(map)
-
-    // --- 1. CLICK BEHAVIOR (4s Persistence) ---
-    marker.on("click", (e) => {
-      // If clicked, clear any timer and immediately start the 4s countdown.
-      clearTimeout(activePopupTimeout)
-      isMouseOver = true; // Pretend we are hovering to prevent immediate hide
-      showPopup(location, e.latlng)
-
-      activePopupTimeout = setTimeout(() => {
-        // Once the 4s is up, if we are NOT still hovering, hide it.
-        activePopupTimeout = null 
-        isMouseOver = false;
-        hidePopup()
-      }, 4000) 
-    })
-
-    // --- 2. HOVER BEHAVIOR ---
-    marker.on("mouseover", (e) => {
-      // Clear the click timer so hover takes precedence
-      clearTimeout(activePopupTimeout)
-      activePopupTimeout = null 
-      isMouseOver = true; // Set state to hovering
-      showPopup(location, e.latlng)
-    })
-
-    marker.on("mouseout", () => {
-      isMouseOver = false; // Set state to not hovering
+  document.getElementById('app-content').innerHTML = `
+    <div class="study-container">
+      <div class="study-header">
+        <h2 class="study-title">${deck.name}</h2>
+        <div class="deck-stats">
+          <span class="stat-badge">Card ${currentCardIndex + 1} of ${shuffledCards.length}</span>
+          <span class="stat-badge">${Math.round(progress)}% Complete</span>
+        </div>
+        <div class="study-progress">
+          <div class="study-progress-bar" style="width: ${progress}%"></div>
+        </div>
+      </div>
       
-      // Only hide if the click timer is NOT currently set (i.e., we didn't just click).
-      // If activePopupTimeout is running, the 4s timer will handle the hide.
-      if (activePopupTimeout === null) {
-          hidePopup()
-      }
-    })
-  })
+      <div class="flashcard-container">
+        <div class="flashcard" onclick="flipCard()">
+          <div class="flashcard-inner" id="flashcard-inner">
+            <div class="flashcard-face">
+              <div>${card.front}</div>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <div>${card.back}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p class="flip-hint">Click the card to reveal the answer</p>
+      
+      <div class="difficulty-buttons" id="difficulty-buttons" style="display: none;">
+        <button class="btn btn-easy" onclick="markDifficulty('easy')">😊 Easy (1)</button>
+        <button class="btn" onclick="markDifficulty('medium')">🤔 Medium (2)</button>
+        <button class="btn btn-hard" onclick="markDifficulty('hard')">😰 Hard (3)</button>
+      </div>
+      
+      <div class="study-controls">
+        <button class="btn btn-secondary" onclick="backToDecks()">← Back</button>
+      </div>
+    </div>
+  `;
 }
+
+/**
+ * Toggles the 'flipped' class on the flashcard and shows difficulty buttons.
+ */
+function flipCard() {
+  const card = document.querySelector('.flashcard');
+  card.classList.toggle('flipped');
+  
+  // Show difficulty buttons after flip
+  const difficultyButtons = document.getElementById('difficulty-buttons');
+  if (card.classList.contains('flipped')) {
+    difficultyButtons.style.display = 'flex';
+  } else {
+    // Hide if unflipped (e.g., if re-flipped quickly)
+    difficultyButtons.style.display = 'none';
+  }
+}
+
+/**
+ * Marks a card's difficulty and advances to the next card.
+ * @param {string} difficulty - The marked difficulty ('easy', 'medium', 'hard').
+ */
+function markDifficulty(difficulty) {
+  // Logic for space repetition (Spaced Repetition System - SRS) would go here.
+  // For now, it simply advances to the next card.
+  
+  if (currentCardIndex < shuffledCards.length - 1) {
+    currentCardIndex++;
+    renderStudyMode();
+  } else {
+    // Study session complete
+    alert('🎉 Great job! You\'ve completed this deck!');
+    backToDecks();
+  }
+}
+
+/**
+ * Resets study state and returns to the deck list view.
+ */
+function backToDecks() {
+  currentStudyDeck = null;
+  shuffledCards = [];
+  // Re-inject initial HTML content
+  document.getElementById('app-content').innerHTML = `
+    <div class="welcome-section">
+      <h1 class="welcome-title">Master Any Subject</h1>
+      <p class="welcome-subtitle">Create beautiful flashcards and study smarter with our intelligent learning system</p>
+      <div class="cta-buttons">
+        <button class="btn" onclick="showCreateDeckModal()">
+          ✨ Create New Deck
+        </button>
+      </div>
+    </div>
+    <div id="decks-container">
+      <div class="decks-grid" id="decks-grid"></div>
+    </div>
+  `;
+  renderDecks();
+}
+
+// Close modals when clicking outside (on the overlay)
+document.getElementById('deckModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeckModal();
+});
+
+document.getElementById('cardModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCardModal();
+});
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+
+// Keyboard shortcuts for study mode
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDeckModal();
+    closeCardModal();
+    closeDeleteModal();
+  }
+  
+  if (currentStudyDeck !== null && !document.querySelector('.modal-overlay.active')) {
+    switch(e.key) {
+      case ' ':
+      case 'Enter':
+        e.preventDefault();
+        flipCard();
+        break;
+      case '1':
+        e.preventDefault();
+        if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+          markDifficulty('easy');
+        }
+        break;
+      case '2':
+        e.preventDefault();
+        if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+          markDifficulty('medium');
+        }
+        break;
+      case '3':
+        e.preventDefault();
+        if (document.getElementById('difficulty-buttons').style.display !== 'none') {
+          markDifficulty('hard');
+        }
+        break;
+    }
+  }
+});
+
+// Initialize app on load
+renderDecks();

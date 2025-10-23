@@ -1,238 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>for nemo!</title>
-    <link rel="stylesheet" href="styles.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Comfortaa:wght@300;400;500;700&family=Nunito:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyCards - Modern Flashcard App</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Inlined Font Import is kept here as it's a common practice for quick loading of external fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  </style>
 </head>
-
 <body>
-    <div class="container">
+  <div class="app-container">
+    <header class="header">
+      <div class="logo">StudyCards</div>
+    </header>
 
-        <div class="stickers-container">
-
-            <img src="ela.PNG" alt="hisham-1" class="sticker" id="hisham-1">
-            <img src="hisham.PNG" alt="hisham-2" class="sticker" id="hisham-2">
-            <img src="ela.PNG" alt="hisham-3" class="sticker" id="hisham-3">
-            <img src="hisham.PNG" alt="hisham-4" class="sticker" id="hisham-4">
-            <img src="ela.PNG" alt="hisham-5" class="sticker" id="hisham-5">
-            <img src="hisham.PNG" alt="hisham-6" class="sticker" id="hisham-6">
-            <img src="ela.PNG" alt="hisham-7" class="sticker" id="hisham-7">
-            <img src="hisham.PNG" alt="hisham-8" class="sticker" id="hisham-8">
-            <img src="ela.PNG" alt="hisham-9" class="sticker" id="hisham-9">
-            <img src="hisham.PNG" alt="hisham-10" class="sticker" id="hisham-10">
-            <img src="ela.PNG" alt="hisham-11" class="sticker" id="hisham-11">
-            <img src="hisham.PNG" alt="hisham-12" class="sticker" id="hisham-12">
-            <img src="ela.PNG" alt="hisham-13" class="sticker" id="hisham-13">
-            <img src="hisham.PNG" alt="hisham-14" class="sticker" id="hisham-14">
-            <img src="ela.PNG" alt="hisham-15" class="sticker" id="hisham-15">
-
-            <img src="hisham.PNG" alt="ela-1" class="sticker" id="ela-1">
-            <img src="ela.PNG" alt="ela-2" class="sticker" id="ela-2">
-            <img src="hisham.PNG" alt="ela-3" class="sticker" id="ela-3">
-            <img src="ela.PNG" alt="ela-4" class="sticker" id="ela-4">
-            <img src="hisham.PNG" alt="ela-5" class="sticker" id="ela-5">
-            <img src="ela.PNG" alt="ela-6" class="sticker" id="ela-6">
-            <img src="hisham.PNG" alt="ela-7" class="sticker" id="ela-7">
-            <img src="ela.PNG" alt="ela-8" class="sticker" id="ela-8">
-            <img src="hisham.PNG" alt="ela-9" class="sticker" id="ela-9">
-            <img src="ela.PNG" alt="ela-10" class="sticker" id="ela-10">
-            <img src="hisham.PNG" alt="ela-11" class="sticker" id="ela-11">
-            <img src="ela.PNG" alt="ela-12" class="sticker" id="ela-12">
-            <img src="hisham.PNG" alt="ela-13" class="sticker" id="ela-13">
-            <img src="ela.PNG" alt="ela-14" class="sticker" id="ela-14">
-            <img src="hisham.PNG" alt="ela-15" class="sticker" id="ela-15">
+    <main class="main-content">
+      <div id="app-content">
+        <div class="welcome-section">
+          <h1 class="welcome-title">Master Any Subject</h1>
+          <p class="welcome-subtitle">Create beautiful flashcards and study smarter with our intelligent learning system</p>
+          <div class="cta-buttons">
+            <button class="btn" onclick="showCreateDeckModal()">
+              ✨ Create Your First Deck
+            </button>
+          </div>
         </div>
 
-        <!-- Main Container -->
-        <div class="container">
-            <!-- Header -->
-            <header class="header">
-                <h1 class="main-title">
-                    <img src="nemo.png" alt="nemo" class="nemo-inline">
-                    <span class="typewriter" data-text="for my nemo"></span>
-                </h1>
-            </header>
-
-            <!-- Secret Code Section -->
-            <section class="secret-section">
-                <div class="secret-card">
-                    <h2 class="section-title">what do i call u?</h2>
-                    <div class="secret-input-container">
-                        <input type="password" id="secretCode" placeholder="enter secret code..." class="secret-input">
-                        <button onclick="checkSecretCode()" class="secret-btn">unlock</button>
-                    </div>
-                    <div class="secret-message" id="secretMessage"></div>
-                </div>
-            </section>
-
-            <!-- Constellation Memory Interface -->
-            <section class="constellation-section">
-                <h2 class="section-title">simp time! in this format cz we're gonna watch the stars</h2>
-                <div class="constellation-container" id="constellationContainer">
-
-                </div>
-                <div class="memory-display" id="memoryDisplay"></div>
-            </section>
-
-            <!-- Countdown Section -->
-            <section class="countdown-section">
-                <div class="countdown-card">
-                    <h2 class="section-title">countdown to seeing each other RAHHH!!!</h2>
-                    <div class="countdown-display" id="countdownDisplay">
-                        <div class="countdown-item">
-                            <span class="countdown-number" id="days">00</span>
-                            <span class="countdown-label">days</span>
-                        </div>
-                        <div class="countdown-item">
-                            <span class="countdown-number" id="hours">00</span>
-                            <span class="countdown-label">hours</span>
-                        </div>
-                        <div class="countdown-item">
-                            <span class="countdown-number" id="minutes">00</span>
-                            <span class="countdown-label">minutes</span>
-                        </div>
-                        <div class="countdown-item">
-                            <span class="countdown-number" id="seconds">00</span>
-                            <span class="countdown-label">seconds</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
+        <div id="decks-container">
+          <div class="decks-grid" id="decks-grid"></div>
         </div>
-        <!-- Probability Steps Section -->
-        <section class="probability-section">
-            <h2 class="section-title">probability of us meeting! (yes i actually calculated)</h2>
-            <div class="accordion">
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span class="accordion-number">01</span>
-                        <span class="accordion-title">Estimating Bumble Users in Cyprus</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <p class="probability-stat">Result: ~6,405 male users aged 20-23</p>
-                        <p>First I needed to know the total population to estimate number of users. Cyprus has about
-                            1,358,000 people. Then I needed to figure out how many people are around 20-23. 6.29% of the
-                            island's population is 20-23 which makes 85,400 people. I assumed half are male so 85,400/2
-                            = 42,700. I couldn't estimate what percentage of these guys would use Bumble so I asked GPT
-                            and got 3 options: 5% (low estimate), 15% (medium), 30% (high). To estimate better I
-                            calculated with medium possibility. 15% of males around our age makes = 6,405 users.</p>
-                    </div>
-                </div>
+      </div>
+    </main>
+  </div>
 
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span class="accordion-number">02</span>
-                        <span class="accordion-title">The Chance I Saw and Liked Your Profile</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <p class="probability-stat">Probability: 0.352% (0.00352)</p>
-                        <p>I swiped on my friend's phone for around 30 mins. Considering average swipe was between 4
-                            seconds, this makes 15 profiles per minute → 15 × 30 = I saw about 450 profiles. The chance
-                            of your profile being one of those is 450/6,405 = 0.0703 and assuming I liked 5% of those
-                            people (around 22 people), chances of you being one is 0.0703 × 0.05 = 0.00352.</p>
-                    </div>
-                </div>
+  <div id="deckModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="deckModalTitle">Create New Deck</h3>
+        <button class="close-btn" onclick="closeDeckModal()">&times;</button>
+      </div>
+      <form id="deckForm">
+        <div class="form-group">
+          <label class="form-label" for="deckName">Deck Name</label>
+          <input type="text" id="deckName" class="form-input" placeholder="Enter deck name..." required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Cards</label>
+          <div id="cardsList" class="cards-list"></div>
+          <button type="button" class="btn btn-secondary" onclick="addCardToDeck()">
+            + Add Card
+          </button>
+        </div>
 
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span class="accordion-number">03</span>
-                        <span class="accordion-title">The Chance You Liked Me Back</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <p class="probability-stat">Probability: 1.998% (0.01998)</p>
-                        <p>Since I estimated male population to be half of the people our age, I took number of female
-                            users as 6,405 also. I assumed you only liked 2% of people you swiped which makes around 128
-                            girls. The possibility of me being one is 128/6,405 considering everyone is equally likely
-                            to be liked/disliked is 128/6,405 = 0.01998.</p>
-                    </div>
-                </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px;">
+          <button type="button" class="btn btn-secondary" onclick="closeDeckModal()">Cancel</button>
+          <button type="submit" class="btn">Save Deck</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span class="accordion-number">04</span>
-                        <span class="accordion-title">The Final Match Probability</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <p class="probability-stat">Combined Probability: 0.007033%</p>
-                        <p>Now since these are independent events, probability of us matching is P(you liking me) × P(me
-                            liking you) = 0.00352 × 0.01998. P(Match) ≈ 0.00007033 is approximately 0.007033%. DAMN</p>
-                    </div>
-                </div>
-            </div>
+  <div id="cardModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cardModalTitle">Add New Card</h3>
+        <button class="close-btn" onclick="closeCardModal()">&times;</button>
+      </div>
+      <form id="cardForm">
+        <div class="form-group">
+          <label class="form-label" for="cardFront">Front (Question/Term)</label>
+          <textarea id="cardFront" class="form-textarea" placeholder="Enter the question or term..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cardBack">Back (Answer/Definition)</label>
+          <textarea id="cardBack" class="form-textarea" placeholder="Enter the answer or definition..." required></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeCardModal()">Cancel</button>
+          <button type="submit" class="btn">Save Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        </section>
-        <!-- Added Playlist Section that was missing from the HTML -->
-        <section class="playlist-section">
-            <div class="playlist-card playlist-notepad">
-                <h2 class="section-title">songs that make me think of you AND WHY</h2>
-                <div class="playlist-list" id="playlistList">
-                    <!-- Playlist items will be generated by JavaScript -->
-                </div>
-            </div>
-        </section>
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal delete-modal">
+      <div class="delete-content">
+        <div class="delete-icon">🗑️</div>
+        <div class="delete-message" id="deleteMessage">Delete this deck?</div>
+        <div class="delete-submessage">This action cannot be undone.</div>
+      </div>
+      <div class="delete-actions">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-hard" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
 
-        <!-- Added Map Section with custom popup -->
-        <section class="map-section">
-            <div class="map-card">
-                <h2 class="section-title">places i like and think we can go to (we can have an idea on where to go this
-                    way when you're here!!)</h2>
-                <div id="map" class="map-container"></div>
-                <!-- Custom popup that appears on hover -->
-                <div id="customPopup" class="custom-popup hidden">
-                    <h3 class="popup-title"></h3>
-                    <p class="popup-message"></p>
-                </div>
-            </div>
-        </section>
-        <section class="message-feature-section">
-            <div class="notebook-container" id="notebookContainer">
-                <div class="notebook-lock" id="notebookLock">
-                    <h3>anything you wanna say big boy?</h3>
-                    <p>to make sure you're actually nemo enter my fav cartoon character (all caps, no gaps)</p>
-                    <input type="password" id="notebookPassword" placeholder="password..."
-                        class="notebook-password-input">
-                    <button onclick="unlockNotebook()" class="unlock-btn">unlock</button>
-                </div>
-
-                <div class="notebook" id="notebook" style="display: none;">
-                    <div class="notebook-header">
-                        <h3>ummm so what do u wanna say to me? any love confessions?</h3>
-                        <button onclick="lockNotebook()" class="lock-btn">🔒</button>
-                    </div>
-                    <form action="https://formspree.io/f/xvgqppwz" method="POST" class="message-form">
-                        <div class="form-group">
-                            <input type="text" name="name" placeholder="nickname (optional)" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <textarea name="message" placeholder="write your confessions here..." class="form-textarea"
-                                required></textarea>
-                        </div>
-                        <button type="submit" class="send-btn">send note</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- Leaflet JS -->
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>
